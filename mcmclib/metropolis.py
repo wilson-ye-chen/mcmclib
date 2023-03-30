@@ -35,14 +35,14 @@ def mala(fp, fg, x0, h, c, n):
     for i in range(1, n):
         # Langevin proposal
         hh = h ** 2
-        mx = x[i - 1] + np.dot(hh / 2 * g[i - 1], c)
+        mx = x[i - 1] + hh / 2 * np.dot(c, g[i - 1])
         s = hh * c
         y = np.random.multivariate_normal(mx, s)
 
         # Log acceptance probability
         py = fp(y)
         gy = fg(y)
-        my = y + np.dot(hh / 2 * gy, c)
+        my = y + hh / 2 * np.dot(c, gy)
         qx = multivariate_normal.logpdf(x[i - 1], my, s)
         qy = multivariate_normal.logpdf(y, mx, s)
         acc_pr = (py + qx) - (p[i - 1] + qy)
