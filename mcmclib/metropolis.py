@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import multivariate_normal
+from tqdm import tqdm
 
 def mala(fp, fg, x0, h, c, n):
     """
@@ -32,7 +33,7 @@ def mala(fp, fg, x0, h, c, n):
     p[0] = fp(x0)
 
     # For each MCMC iteration
-    for i in range(1, n):
+    for i in tqdm(range(1, n)):
         # Langevin proposal
         hh = h ** 2
         mx = x[i - 1] + hh / 2 * np.dot(c, g[i - 1])

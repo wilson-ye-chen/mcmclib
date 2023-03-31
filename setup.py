@@ -8,5 +8,5 @@ setup(
     author='Wilson Ye Chen',
     license='MIT',
     packages=['mcmclib'],
-    install_requires=['numpy', 'scipy']
+    install_requires=['numpy', 'scipy', 'tqdm']
     )
