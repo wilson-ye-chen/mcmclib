@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import multivariate_normal
+from statsmodels.stats.correlation_tools import cov_nearest
 from tqdm import tqdm
 
 def mala(fp, fg, x0, h, c, n):
@@ -60,3 +61,52 @@ def mala(fp, fg, x0, h, c, n):
             p[i] = p[i - 1]
 
     return (x, g, p, a)
+
+def mala_adapt(fp, fg, x0, h0, c0, alpha, epoch):
+    """
+    Sample from a target distribution using an adaptive version of the
+    Metropolis-adjusted Langevin algorithm.
+
+    Args:
+    fp    - handle to the log-density function of the target.
+    fg    - handle to the gradient function of the log target.
+    x0    - vector of the starting values of the Markov chain.
+    h0    - initial step-size parameter.
+    c0    - initial preconditioning matrix.
+    alpha - adaptive schedule.
+    epoch - length of each tuning epoch.
+
+    Returns:
+    h     - tuned step-size.
+    c     - tuned preconditioning matrix.
+    x     - list of matrices of generated points.
+    g     - list of matrices of gradients of the log target at X.
+    p     - list of vectors of log-density values of the target at X.
+    a     - list of binary vectors indicating whether a move is accepted.
+    """
+
+    n_ep = len(epoch)
+    x = n_ep * [None]
+    g = n_ep * [None]
+    p = n_ep * [None]
+    a = n_ep * [None]
+
+    # First epoch
+    h = h0
+    c = c0
+    x[0], g[0], p[0], a[0] = mala(fp, fg, x0, h, c, epoch[0])
+
+    for i in range(1, n_ep):
+        # Adapt preconditioning matrix
+        c = alpha[i] * c + (1 - alpha[i]) * np.cov(x[i - 1].T)
+        c = cov_nearest(c)
+
+        # Tune step-size
+        ar = np.mean(a[i - 1])
+        h = h * np.exp(ar - 0.57)
+
+        # Next epoch
+        x0_new = x[i - 1][-1]
+        x[i], g[i], p[i], a[i] = mala(fp, fg, x0_new, h, c, epoch[0])
+
+    return (h, c, x, g, p, a)
