@@ -1,8 +1,30 @@
 import numpy as np
 from scipy.stats import multivariate_normal
 from statsmodels.stats.correlation_tools import cov_nearest
-from tqdm import tqdm
+from functools import wraps
+import sys
 
+if 'ipykernel' in sys.modules:
+    from tqdm.notebook import tqdm
+else:
+    from tqdm import tqdm
+
+
+def use_progress_bar(func):
+    @wraps(func)
+    def wrapper(*args, use_progress_bar=True, **kwargs):
+        if use_progress_bar:
+            with tqdm(total=100) as pbar:
+                # Call the decorated function and update the progress bar
+                result = func(*args, **kwargs)
+                pbar.update(100)
+        else:
+            # Call the decorated function without using the progress bar
+            result = func(*args, **kwargs)
+        return result
+    return wrapper
+
+@use_progress_bar
 def mala(fp, fg, x0, h, c, n):
     """
     Sample from a target distribution using the Metropolis-adjusted Langevin
@@ -62,6 +84,7 @@ def mala(fp, fg, x0, h, c, n):
 
     return (x, g, p, a)
 
+@use_progress_bar
 def mala_adapt(fp, fg, x0, h0, c0, alpha, epoch):
     """
     Sample from a target distribution using an adaptive version of the
