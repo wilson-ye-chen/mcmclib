@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='mcmclib',
-    version='0.1.0',
+    version='0.1.1',
     description='Library of MCMC sampling algorithms',
     url='https://github.com/wilson-ye-chen/mcmclib',
     author='Wilson Ye Chen',
