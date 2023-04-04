@@ -107,6 +107,6 @@ def mala_adapt(fp, fg, x0, h0, c0, alpha, epoch):
 
         # Next epoch
         x0_new = x[i - 1][-1]
-        x[i], g[i], p[i], a[i] = mala(fp, fg, x0_new, h, c, epoch[0])
+        x[i], g[i], p[i], a[i] = mala(fp, fg, x0_new, h, c, epoch[i])
 
     return (h, c, x, g, p, a)
