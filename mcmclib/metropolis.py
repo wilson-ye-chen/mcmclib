@@ -73,16 +73,16 @@ def mala_adapt(fp, fg, x0, h0, c0, alpha, epoch):
     x0    - vector of the starting values of the Markov chain.
     h0    - initial step-size parameter.
     c0    - initial preconditioning matrix.
-    alpha - adaptive schedule.
-    epoch - length of each tuning epoch.
+    alpha - vector of learning rates for preconditioning matrix.
+    epoch - vector of tuning epoch lengths.
 
     Returns:
+    x     - list of matrices of generated points.
+    g     - list of matrices of gradients of the log target at x.
+    p     - list of vectors of log-density values of the target at x.
+    a     - list of binary vectors indicating whether a move is accepted.
     h     - tuned step-size.
     c     - tuned preconditioning matrix.
-    x     - list of matrices of generated points.
-    g     - list of matrices of gradients of the log target at X.
-    p     - list of vectors of log-density values of the target at X.
-    a     - list of binary vectors indicating whether a move is accepted.
     """
 
     n_ep = len(epoch)
@@ -98,7 +98,7 @@ def mala_adapt(fp, fg, x0, h0, c0, alpha, epoch):
 
     for i in range(1, n_ep):
         # Adapt preconditioning matrix
-        c = alpha[i] * c + (1 - alpha[i]) * np.cov(x[i - 1].T)
+        c = alpha[i - 1] * c + (1 - alpha[i - 1]) * np.cov(x[i - 1].T)
         c = cov_nearest(c)
 
         # Tune step-size
@@ -109,4 +109,4 @@ def mala_adapt(fp, fg, x0, h0, c0, alpha, epoch):
         x0_new = x[i - 1][-1]
         x[i], g[i], p[i], a[i] = mala(fp, fg, x0_new, h, c, epoch[i])
 
-    return (h, c, x, g, p, a)
+    return (x, g, p, a, h, c)
