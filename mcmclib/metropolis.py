@@ -3,7 +3,7 @@ from scipy.stats import multivariate_normal
 from statsmodels.stats.correlation_tools import cov_nearest
 from tqdm import tqdm
 
-def mala(fp, fg, x0, h, c, n):
+def mala(fp, fg, x0, h, c, n, pb=True):
     """
     Sample from a target distribution using the Metropolis-adjusted Langevin
     algorithm.
@@ -15,6 +15,7 @@ def mala(fp, fg, x0, h, c, n):
     h  - step-size parameter.
     c  - preconditioning matrix.
     n  - number of MCMC iterations.
+    pb - a progress bar is shown if set to True (default).
 
     Returns:
     x  - matrix of generated points.
@@ -34,7 +35,7 @@ def mala(fp, fg, x0, h, c, n):
     p[0] = fp(x0)
 
     # For each MCMC iteration
-    for i in tqdm(range(1, n)):
+    for i in tqdm(range(1, n), disable=(not pb)):
         # Langevin proposal
         hh = h ** 2
         mx = x[i - 1] + hh / 2 * np.dot(c, g[i - 1])
@@ -62,7 +63,7 @@ def mala(fp, fg, x0, h, c, n):
 
     return (x, g, p, a)
 
-def mala_adapt(fp, fg, x0, h0, c0, alpha, epoch):
+def mala_adapt(fp, fg, x0, h0, c0, alpha, epoch, pb=True):
     """
     Sample from a target distribution using an adaptive version of the
     Metropolis-adjusted Langevin algorithm.
@@ -75,6 +76,7 @@ def mala_adapt(fp, fg, x0, h0, c0, alpha, epoch):
     c0    - initial preconditioning matrix.
     alpha - vector of learning rates for preconditioning matrix.
     epoch - vector of tuning epoch lengths.
+    pb    - a progress bar is shown if set to True (default).
 
     Returns:
     x     - list of matrices of generated points.
@@ -94,9 +96,9 @@ def mala_adapt(fp, fg, x0, h0, c0, alpha, epoch):
     # First epoch
     h = h0
     c = c0
-    x[0], g[0], p[0], a[0] = mala(fp, fg, x0, h, c, epoch[0])
+    x[0], g[0], p[0], a[0] = mala(fp, fg, x0, h, c, epoch[0], False)
 
-    for i in range(1, n_ep):
+    for i in tqdm(range(1, n_ep), disable=(not pb)):
         # Adapt preconditioning matrix
         c = alpha[i - 1] * c + (1 - alpha[i - 1]) * np.cov(x[i - 1].T)
         c = cov_nearest(c)
@@ -107,6 +109,6 @@ def mala_adapt(fp, fg, x0, h0, c0, alpha, epoch):
 
         # Next epoch
         x0_new = x[i - 1][-1]
-        x[i], g[i], p[i], a[i] = mala(fp, fg, x0_new, h, c, epoch[i])
+        x[i], g[i], p[i], a[i] = mala(fp, fg, x0_new, h, c, epoch[i], False)
 
     return (x, g, p, a, h, c)
